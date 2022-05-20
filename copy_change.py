@@ -1,50 +1,35 @@
 
+import sys
 import os
 import os.path
 import datetime
 import shutil
+import filecmp
 
-# times_path = os.getcwd() + '\\times.txt'
-file_systems = {}
+assert(len(sys.argv) > 2), "Insufficient number of input arguments"
+for i in range(1, len(sys.argv)):
+    assert(os.path.exists(os.getcwd() + "\\" + sys.argv[i])), f"Invalid input argument {i}"
+
+subdirs = {}
 cwd = os.getcwd()
-for dir in ['example', 'output']:
-    with open(dir + '_times.txt', 'w') as times_files:
-        file_systems[dir] = {}
+
+for dir in sys.argv[1:]:
+        subdirs[dir] = {}
         files = os.listdir("./" + dir)
-        dir_ctime = os.path.getctime(os.getcwd() + "\\" + dir)
-        dir_mtime = os.path.getmtime(os.getcwd() + "\\" + dir)
-        # print(datetime.datetime.fromtimestamp(dir_ctime))
-        # print(datetime.datetime.fromtimestamp(dir_mtime))
+        dir_ctime = os.path.getctime(cwd + "\\" + dir)
+        dir_mtime = os.path.getmtime(cwd + "\\" + dir)
         for file in files:
-            creation_time = os.path.getctime(os.getcwd() + "\\" +  dir + "\\" + file)
-            modified_time = os.path.getmtime(os.getcwd() + "\\" +  dir + "\\" + file)
+            creation_time = os.path.getctime(cwd + "\\" +  dir + "\\" + file)
+            modified_time = os.path.getmtime(cwd + "\\" +  dir + "\\" + file)
             ctime = datetime.datetime.fromtimestamp(creation_time)
             mtime = datetime.datetime.fromtimestamp(modified_time)
-            file_time = (file, ctime, mtime)
-            file_systems[dir][file] = {"ctime": f"{ctime}", "mtime": f"{mtime}"}
-            # file_systems[dir].add({f{"{file}": {"ctime": ctime, "mtime": mtime}})
-            times_files.write(f"{file}, {creation_time}, {modified_time} \n")
+            subdirs[dir][file] = {"ctime": f"{ctime}", "mtime": f"{mtime}"}
 
-        print(file_systems)
-# tests start
-## addfilesiffilesindictbutnotinfolder
-### file_systems['output'] = file_systems['example']
-
-# tests end
-files = os.listdir("./example")
+files = os.listdir("./" + sys.argv[1])
 for file in files:
-    for dir in ['output']:
-        file_ctime = os.path.getctime(cwd + "\\" +  dir + "\\" + file)
-        file_mtime = os.path.getmtime(cwd + "\\" +  dir + "\\" + file)
-        ctime = datetime.datetime.fromtimestamp(file_ctime)
-        mtime = datetime.datetime.fromtimestamp(file_mtime)
-        if (file not in file_systems[dir] or
+    for dir in sys.argv[2:]:
+        if (file not in subdirs[dir] or
            not os.path.exists(cwd + "\\" + dir + "\\" + file) or
-           (file_systems['example'][file]["ctime"] > file_systems[dir][file]["ctime"] and
-            file_systems['example'][file]["ctime"] > file_systems[dir][file]["mtime"]) or
-           (file_systems['example'][file]["mtime"] > file_systems[dir][file]["ctime"] and
-            file_systems['example'][file]["mtime"] > file_systems[dir][file]["mtime"])
+           not filecmp.cmp(cwd + "\\example\\" + file, cwd + "\\" +  dir + "\\" + file)
            ):
-                shutil.copy(os.getcwd() + "\\example\\" + file, os.getcwd() + "\\" +  dir + "\\" + file)
-                file_systems[dir][file] = {"ctime": f"{ctime}", "mtime": f"{mtime}"}
-print(file_systems)
+                shutil.copy(cwd + "\\example\\" + file, cwd + "\\" +  dir + "\\" + file)
